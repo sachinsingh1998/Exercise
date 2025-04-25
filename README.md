@@ -26,7 +26,25 @@ project/
 ├── README.md                       # This file
 ```
 
-**Important**: The dataset folder must be named `Aerial_Landscapes` and placed in the same directory as the notebook.
+---
+
+##  Dataset Location & Access
+
+- Dataset folder **must be named `Aerial_Landscapes`** and placed in the **same directory** as the notebook.
+- The code accesses the images using:
+  ```python
+  path = "Aerial_Landscapes"
+  os.path.join(path, category)
+  ```
+- All category folders should contain `.jpg` images only.
+- Folder names should exactly match the class labels:
+  ```
+  ['Agriculture', 'Airport', 'Beach', 'City', 'Desert',
+   'Forest', 'Grassland', 'Highway', 'Lake', 'Mountain',
+   'Parking', 'Port', 'Railway', 'Residential', 'River']
+  ```
+
+---
 
 ---
 ## Methods
@@ -41,33 +59,34 @@ project/
 #### Features Extracted
 
 - **Color Histogram**
-  - 8×8×8 bins on RGB channels, normalized and flattened
   - Image resized to 512×512
-
+  - 8×8×8 bins for RGB channels
+  - Normalized and flattened
 - **HOG (Histogram of Oriented Gradients)**
-  - Grayscale image resized to 128×128
+  - Image resized to 128×128 and converted to grayscale
   - `pixels_per_cell=(8, 8)`, `cells_per_block=(2, 2)`, `orientations=9`
-
-- **PCA for HOG**
-  - Dimensionality reduction to 1000 components
-
+- **Dimensionality Reduction**
+  - PCA applied to HOG features (`n_components=1000`)
 - **Feature Fusion**
-  - Combined: `[PCA-HOG || Color Histogram]`
-  - Standardized with `StandardScaler`
+  - Final feature vector = `[PCA-HOG || Histogram]` concatenated
+  - Standardized using `StandardScaler`
 
 ### Models Used
 
-- **XGBoost**
-  - `gpu_hist`, `gpu_predictor`
+- **XGBoost** with:
+  - `gpu_hist` tree method
+  - `predictor='gpu_predictor'`
 - **Random Forest**
-  - 1000 trees, `max_depth=10`, class-balanced
-- **Voting Classifier**
-  - Soft voting ensemble of RF + XGBoost
+  - `n_estimators=1000`, `max_depth=10`, class-balanced
+- Combined using `VotingClassifier` (soft voting)
 
 ### Evaluation
 
-- Stratified 70/15/15 split
-- Accuracy, Classification Report, and Confusion Matrix (raw & normalized)
+- **Train/Validation/Test Split**: 70% / 15% / 15% (stratified)
+- Metrics reported:
+  - Accuracy
+  - Classification Report
+  - Confusion Matrix (normalized and raw)
 
 ---
 
@@ -75,40 +94,64 @@ project/
 
 ### 1. VGG-16 and ResNet-50 (Transfer Learning & Explainable AI)
 
-- **Backbones**: Pretrained on ImageNet
-- **Modifications**: Final FC layer changed for 15 classes
-- **Training**: First few layers frozen; deeper layers fine-tuned
+- **Backbones**: VGG-16 and ResNet-50 from `torchvision.models`
+- **Weights**: Pretrained on ImageNet  
+- **Training**: Frozen first few layers and trained the later Convolutional layers and FC layers
 - **Loss**: CrossEntropyLoss
-- **XAI**: Class Activation Maps generated from final convolutional layers
-- **Metrics**: Accuracy, Precision, Recall, F1, Confusion Matrix
+- **Metrics**: Accuracy, Confusion Matrix, Macro Averaged Precision, Recall and F1 scores
+- **XAI**: Capture Activated Features from last Convolutional layer and display the Class Activation Map.
 
-### 2. EfficientNetV2-S
+### 2. EfficientNetV2 (with data augmentation and class imbalance handling)
 
 - **Transformations**: Augmented with flips, jitter, normalization
-- **Class Imbalance**: Handled using `WeightedRandomSampler`
+- **Backbones**: EfficientNetV2 from `torchvision.models`
+- **Weights**: Pretrained on ImageNet  
+- **Training**: Replacing the final output layer with a Linear layer mapped to the number of output classes (15).
+- **Class Imbalance**: Handled using `WeightedRandomSampler`according to the class weight ensuring that underrepresented classes are      equally likely to be seen during training.
+- **Loss**: CrossEntropyLoss
 - **Optimizations**: Early stopping and LR scheduling
-- **Metrics**: Accuracy, F1-Score, Precision, Recall
+- **Metrics**: Accuracy, Confusion Matrix, Macro Averaged Precision, Recall and F1 scores
+- 
+## 3. DenseNet-121 (Three-Way Split)
+- Architecture: DenseNet-121, known for its dense connections that promote feature reuse and stronger gradient flow.
+- Used pretrained weights from ImageNet and replaced the classifier for 15 classes.
+- Initial training with frozen base layers, followed by fine-tuning.
+- Weighted loss function applied to account for minor class imbalance.
+- Achieved high classification performance, especially on texture-rich classes like desert, forest, and grass.
+- Confusion matrix and classification report included in the report.
 
-### 3. DenseNet-121
+## 4. EfficientNet-B0 (Three-Way Split)
+- Architecture: EfficientNet-B0, which uses compound scaling to balance network depth, width, and resolution.
+- Fine-tuned using the same train/val/test split and preprocessing as DenseNet.
+- Optimized for performance with low parameter count (~5M).
+- Reached test accuracy above 98% and trained faster than DenseNet.
+- Strong performance on clearly distinct categories such as airport and runway.
+- Evaluation included confusion matrix and full classification metrics.
 
-- **Structure**: 3-way split (train/val/test)
-- **Performance**: Excellent on fine-grained features like texture
-- **Metrics**: Accuracy, Classification Report, Confusion Matrix
-
-### 4. EfficientNet-B0
-
-- **Strengths**: Lightweight, fast convergence
-- **Setup**: Folder-based train/val/test structure
-- **Metrics**: Accuracy and per-class F1-score
 
 ---
+
+---
+
+## Evaluation
+
+- Evaluation performed on held-out test sets
+- Plotted confusion matrices and metric comparisons
+- Qualitative visualizations for each model's performance
+- Metrics used across models:
+  - Accuracy
+  - Precision, Recall, F1-score
+  - Confusion Matrix
+
+---
+
 
 ## Hardware Used
 
 - **GPU**: NVIDIA RTX 5080 (Blackwell, sm_120)
 - **CPU**: Intel Core i7-14700K
 - **RAM**: 32 GB DDR5
-- **Environment**: Ubuntu 22.04, Python 3.11
+- **Environment**: Ubuntu 24.04.2, Python 3.11
 - **Note**: PyTorch built from source with nightly version for `sm_120` GPU support
 
 ---
@@ -137,15 +180,18 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 ## Contributors
 
-- 
+- Aryan Tiwari  
+- Soundhar Krishnamoorthy
+- Srividhya Parthasarathy
+- Shayan Ziaei
+- Sachin Singh
 
 ---
 
 ## Acknowledgements
 
 - SkyView dataset from Kaggle  
-- PyTorch & TorchVision pretrained models  
-- ThunderSVM (GPU-accelerated SVM)  
-- Kaggle community reference for data loading: https://www.kaggle.com/code/bryamblasrimac/skyview-eda-vit-accuracy-96-33  
-- scikit-learn, OpenCV, and XGBoost libraries  
+- Pretrained weights PyTorch  
+- Scikit-learn and OpenCV libraries for traditional ML 
+- Kaggle Code for Custom DataLoading into Pandas Dataframe https://www.kaggle.com/code/bryamblasrimac/skyview-eda-vit-accuracy-96-33
 - Special thanks to the UNSW COMP9517 teaching team
