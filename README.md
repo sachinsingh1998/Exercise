@@ -43,9 +43,6 @@ project/
    'Forest', 'Grassland', 'Highway', 'Lake', 'Mountain',
    'Parking', 'Port', 'Railway', 'Residential', 'River']
   ```
-
----
-
 ---
 ## Methods
 
@@ -62,11 +59,14 @@ project/
   - Image resized to 512×512
   - 8×8×8 bins for RGB channels
   - Normalized and flattened
+
 - **HOG (Histogram of Oriented Gradients)**
   - Image resized to 128×128 and converted to grayscale
   - `pixels_per_cell=(8, 8)`, `cells_per_block=(2, 2)`, `orientations=9`
+
 - **Dimensionality Reduction**
   - PCA applied to HOG features (`n_components=1000`)
+
 - **Feature Fusion**
   - Final feature vector = `[PCA-HOG || Histogram]` concatenated
   - Standardized using `StandardScaler`
@@ -76,6 +76,7 @@ project/
 - **XGBoost** with:
   - `gpu_hist` tree method
   - `predictor='gpu_predictor'`
+
 - **Random Forest**
   - `n_estimators=1000`, `max_depth=10`, class-balanced
 - Combined using `VotingClassifier` (soft voting)
@@ -93,7 +94,6 @@ project/
 ## Deep Learning Models
 
 ### 1. VGG-16 and ResNet-50 (Transfer Learning & Explainable AI)
-
 - **Backbones**: VGG-16 and ResNet-50 from `torchvision.models`
 - **Weights**: Pretrained on ImageNet  
 - **Training**: Frozen first few layers and trained the later Convolutional layers and FC layers
@@ -102,7 +102,6 @@ project/
 - **XAI**: Capture Activated Features from last Convolutional layer and display the Class Activation Map.
 
 ### 2. EfficientNetV2 (with data augmentation and class imbalance handling)
-
 - **Transformations**: Augmented with flips, jitter, normalization
 - **Backbones**: EfficientNetV2 from `torchvision.models`
 - **Weights**: Pretrained on ImageNet  
@@ -111,7 +110,7 @@ project/
 - **Loss**: CrossEntropyLoss
 - **Optimizations**: Early stopping and LR scheduling
 - **Metrics**: Accuracy, Confusion Matrix, Macro Averaged Precision, Recall and F1 scores
-- 
+
 ## 3. DenseNet-121 (Three-Way Split)
 - Architecture: DenseNet-121, known for its dense connections that promote feature reuse and stronger gradient flow.
 - Used pretrained weights from ImageNet and replaced the classifier for 15 classes.
@@ -128,14 +127,11 @@ project/
 - Strong performance on clearly distinct categories such as airport and runway.
 - Evaluation included confusion matrix and full classification metrics.
 
-
----
-
 ---
 
 ## Evaluation
 
-- Evaluation performed on held-out test sets
+- Evaluation performed on unseen test sets
 - Plotted confusion matrices and metric comparisons
 - Qualitative visualizations for each model's performance
 - Metrics used across models:
@@ -158,10 +154,11 @@ project/
 
 ## Installation
 
-Install the required packages:
+Install the required packages by running the below command:
 
 ```
-pip install torch torchvision thundersvm opencv-python scikit-learn scikit-image xgboost matplotlib seaborn tqdm pandas PIL torchinfo
+pip install torch torchvision thundersvm opencv-python xgboost opencv-python scikit-learn scikit-image matplotlib seaborn tqdm pandas pillow torchinfo xgboost seaborn PIL torchinfo
+
 ```
 
 ---
@@ -169,7 +166,7 @@ pip install torch torchvision thundersvm opencv-python scikit-learn scikit-image
 ## Usage
 
 1. Ensure dataset is placed inside a folder named `Aerial_Landscapes`.
-2. Run the notebook `Project_final.ipynb` from start to end.
+2. Run the notebook `Submission.ipynb` from start to end.
 3. Adjust device setting if necessary:
 
 ```python
@@ -191,7 +188,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 ## Acknowledgements
 
 - SkyView dataset from Kaggle  
-- Pretrained weights PyTorch  
+- Pretrained weights from PyTorch for various deep learning models  
 - Scikit-learn and OpenCV libraries for traditional ML 
 - Kaggle Code for Custom DataLoading into Pandas Dataframe https://www.kaggle.com/code/bryamblasrimac/skyview-eda-vit-accuracy-96-33
 - Special thanks to the UNSW COMP9517 teaching team
