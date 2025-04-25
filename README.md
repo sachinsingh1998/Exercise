@@ -148,7 +148,7 @@ project/
 - **CPU**: Intel Core i7-14700K
 - **RAM**: 32 GB DDR5
 - **Environment**: Ubuntu 24.04.2, Python 3.11
-- **Note**: PyTorch built from source with nightly version for `sm_120` GPU support
+- **Note**: torch (sm_120 support for RTX 5000 series(nightly version))
 
 ---
 
